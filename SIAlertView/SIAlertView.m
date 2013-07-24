@@ -266,6 +266,8 @@ static SIAlertView *__si_alert_current_view;
     if (!animated) {
         [__si_alert_background_window removeFromSuperview];
         __si_alert_background_window = nil;
+        [SIAlertView setAnimating:NO];
+
         return;
     }
     [UIView animateWithDuration:0.3
@@ -275,6 +277,8 @@ static SIAlertView *__si_alert_current_view;
                      completion:^(BOOL finished) {
                          [__si_alert_background_window removeFromSuperview];
                          __si_alert_background_window = nil;
+                         [SIAlertView setAnimating:NO];
+
                      }];
 }
 
@@ -359,11 +363,14 @@ static SIAlertView *__si_alert_current_view;
         }
         [[NSNotificationCenter defaultCenter] postNotificationName:SIAlertViewDidShowNotification object:self userInfo:nil];
         
-        [SIAlertView setAnimating:NO];
         
         NSInteger index = [[SIAlertView sharedQueue] indexOfObject:self];
         if (index < [SIAlertView sharedQueue].count - 1) {
             [self dismissAnimated:YES cleanup:NO]; // dismiss to show next alert view
+        }
+        else {
+            [SIAlertView setAnimating:NO];
+
         }
     }];
 }
@@ -401,7 +408,6 @@ static SIAlertView *__si_alert_current_view;
             [[SIAlertView sharedQueue] removeObject:self];
         }
         
-        [SIAlertView setAnimating:NO];
         
         if (isVisible) {
             if (self.didDismissHandler) {
@@ -414,7 +420,8 @@ static SIAlertView *__si_alert_current_view;
         if (!isVisible) {
             return;
         }
-        
+        [SIAlertView setAnimating:NO];
+
         if (nextAlertView) {
             [nextAlertView show];
         } else {
@@ -427,11 +434,11 @@ static SIAlertView *__si_alert_current_view;
     };
     
     if (animated && isVisible) {
-        [SIAlertView setAnimating:YES];
         [self transitionOutCompletion:dismissComplete];
         
         if ([SIAlertView sharedQueue].count == 1) {
             [SIAlertView hideBackgroundAnimated:YES];
+            
         }
         
     } else {
@@ -897,6 +904,11 @@ static SIAlertView *__si_alert_current_view;
 
 - (void)buttonAction:(UIButton *)button
 {
+    if ([SIAlertView isAnimating]) {
+        NSLog(@"is animating");
+        return;
+    }
+    NSLog(@"Clicked ok");
 	[SIAlertView setAnimating:YES]; // set this flag to YES in order to prevent showing another alert in action block
     SIAlertItem *item = self.items[button.tag];
 	if (item.action) {
